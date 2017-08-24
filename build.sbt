@@ -6,11 +6,31 @@ scalaVersion := "2.12.3"
 
 version := "0.1.0"
 
+fork in run in Global := true
+
+exportJars := true
+
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 enablePlugins(CucumberPlugin)
 
 CucumberPlugin.glue := "com/grandsys/inu/storedq/"
+
+lazy val cpJarsForDocker = taskKey[Unit]("prepare for building Docker image")
+
+cpJarsForDocker := {
+
+  val dockerDir = (target in Compile).value / "docker"
+
+  val jar = (packageBin in Compile).value
+  IO.copyFile(jar, dockerDir / "app" / jar.name)
+
+  (dependencyClasspath in Compile).value.files.foreach { f => IO.copyFile(f, dockerDir / "libs" / f.name )}
+
+  (mainClass in Compile).value.foreach { content => IO.write( dockerDir / "mainClass", content ) }
+
+  IO.copyFile(baseDirectory.value / "Dockerfile", dockerDir / "Dockerfile")
+}
 
 lazy val cucumber = Seq(
   "io.cucumber" % "cucumber-core" ,
