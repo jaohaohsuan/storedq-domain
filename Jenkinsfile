@@ -1,5 +1,5 @@
 def pod_label = "${env.JOB_NAME}-${env.BUILD_NUMBER}".replace("/", "-")
-def scala_version = "2.12.8"
+def scala_version = "2.12.3"
 podTemplate(
         label: pod_label,
         containers: [
