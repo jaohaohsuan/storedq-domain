@@ -40,7 +40,8 @@ podTemplate(
                 sh "sbt cpJarsForDocker"
             }
             dir('target/docker') {
-                image = docker.build(imageRepo, "--no-cache=true --pull .")
+                def mainClass = sh(returnStdout: true, script: 'cat mainClass').trim()
+                image = docker.build(imageRepo, "--pull --build-arg JAVA_MAIN_CLASS=${mainClass} .")
             }
         }
 
