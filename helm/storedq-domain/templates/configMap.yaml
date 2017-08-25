@@ -1,0 +1,62 @@
+{{- $membersPath := printf "/members/akka.tcp://%s@${POD_IP}:%v" .Values.actorsystem .Values.seedPort }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fullname" . }}
+data:
+  healthz: |-
+    /usr/bin/curl -i http://${POD_IP}:{{ .Values.clusterHttpManPort }}{{ $membersPath }}
+  prod.conf: |-
+    include "application"
+
+    cluster {
+      name = {{ .Values.actorsystem }}
+      port = {{ .Values.seedPort }}
+      {{- $seedfmt := printf "%s-%%d.%s.%s.svc.cluster.local" .Values.seednodes.hostnamePrefix .Values.seednodes.service.name .Release.Namespace }}
+      seed-nodes = [
+      {{- $replicas := ( .Values.seednodes.replicaCount | int ) }}
+        {{- range $e := until $replicas }}
+          "{{ printf $seedfmt $e }}"
+          {{- if ne $replicas (add1 $e) -}}
+          ,
+          {{- end }}
+        {{- end }}
+      ]
+    }
+
+    akka {
+      loglevel = "INFO"
+
+      actor {
+        serialize-messages = on
+
+        serializers {
+          proto = "akka.remote.serialization.ProtobufSerializer"
+        }
+
+        serialization-bindings {
+          "com.trueaccord.scalapb.GeneratedMessage" = proto
+        }
+      }
+
+      remote {
+        log-remote-lifecycle-events = off
+        netty.tcp {
+          hostname = ${?POD_IP}
+        }
+      }
+
+      cluster {
+        seed-nodes = []
+        log-info = on
+        metrics.enabled = off
+
+        http {
+          management {
+            hostname = ${?POD_IP}
+            port = {{ .Values.clusterHttpManPort }}
+          }
+        }
+      }
+    }
