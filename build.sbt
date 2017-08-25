@@ -10,7 +10,10 @@ fork in run in Global := true
 
 exportJars := true
 
-resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers ++= Seq(
+  Resolver.sonatypeRepo("snapshots"),
+  "jitpack" at "https://jitpack.io"
+)
 
 enablePlugins(CucumberPlugin)
 
@@ -50,6 +53,7 @@ libraryDependencies ++= Seq (
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
   "com.lightbend.akka" %% "akka-management-cluster-http" % "0.3",
   "com.waioeka.sbt" %% "cucumber-runner" % "0.1.2",
+  "com.github.jaohaohsuan.lib1" % "protobuf_2.12" % "master-SNAPSHOT",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 ) ++ cucumber ++ akka
