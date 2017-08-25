@@ -1,0 +1,12 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get {{ .Release.Name }}
+
+To upgrade image:
+
+  $ helm upgrade {{ .Release.Name }} --set=image.tag={{ .Values.image.tag }} {{ .Values.helmRepo }}/{{ .Chart.Name }}
