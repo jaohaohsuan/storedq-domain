@@ -50,5 +50,32 @@ podTemplate(
                 image.push(imageTag)
             }
         }
+
+        stage('helm init') {
+            container('helm') {
+                sh 'helm init --client-only'
+            }
+        }
+
+        stage('install chart') {
+            container('helm') {
+                dir('helm/storedq-domain') {
+                    def release = "storedq-domain-${env.BUILD_ID}"
+
+                    sh 'helm lint .'
+                    sh "helm install -n ${release} --set=image.tag=${imageTag} ."
+
+                    try {
+                        sh "helm test ${release} --cleanup"
+                    } catch(err) {
+                        echo "${error}"
+                        currentBuild.result = FAILURE
+                    }
+                    finally {
+                        sh "helm delete --purge ${release}"
+                    }
+                }
+            }
+        }
     }
 }
