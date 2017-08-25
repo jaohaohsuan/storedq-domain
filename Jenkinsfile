@@ -1,11 +1,12 @@
-def pod_label = "${env.JOB_NAME}-${env.BUILD_NUMBER}".replace('/', '-').replace('.', '')
-def scala_version = "2.12.3"
+def podLabel = "${env.JOB_NAME}-${env.BUILD_NUMBER}".replace('/', '-').replace('.', '')
+def scalaVersion = "2.12.3"
 
 podTemplate(
-        label: pod_label,
+        label: podLabel,
         containers: [
                 containerTemplate(name: 'jnlp', image: env.JNLP_SLAVE_IMAGE, args: '${computer.jnlpmac} ${computer.name}', alwaysPullImage: true),
-                containerTemplate(name: 'sbt', image: "${env.PRIVATE_REGISTRY}/library/sbt:${scala_version}-fabric8", ttyEnabled: true, command: 'cat', alwaysPullImage: true),
+                containerTemplate(name: 'sbt', image: "${env.PRIVATE_REGISTRY}/library/sbt:${scalaVersion}-fabric8", ttyEnabled: true, command: 'cat', alwaysPullImage: true),
+                containerTemplate(name: 'helm', image: env.HELM_IMAGE, ttyEnabled: true, command: 'cat'),
                 containerTemplate(name: 'dind', image: 'docker:stable-dind', privileged: true, ttyEnabled: true, command: 'dockerd', args: '--host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 --storage-driver=vfs')
         ],
         volumes: [
@@ -15,16 +16,37 @@ podTemplate(
                 persistentVolumeClaim(claimName: env.JENKINS_IVY2, mountPath: '/home/jenkins/.ivy2', readOnly: false),
         ]) {
 
-    node(pod_label) {
+    node(podLabel) {
         stage('build') {
             checkout scm
             container('sbt') {
                 sh "sbt compile"
             }
         }
+
         stage('test') {
             container('sbt') {
                 sh "sbt test"
+            }
+        }
+
+        def HEAD = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        def imageTag = "${HEAD}-${env.BUILD_NUMBER}"
+        def imageRepo = "${env.PRIVATE_REGISTRY}/inu/storedq-domain"
+        def image
+
+        stage('build image') {
+            container('sbt') {
+                sh "sbt cpJarsForDocker"
+            }
+            dir('target/docker') {
+                image = docker.build(imageRepo, "--no-cache=true --pull .")
+            }
+        }
+
+        stage('push image') {
+            docker.withRegistry(env.PRIVATE_REGISTRY_URL, 'docker-login') {
+                image.push(imageTag)
             }
         }
     }
