@@ -1,6 +1,6 @@
 FROM fabric8/java-alpine-openjdk8-jre:1.2
 
-RUN apk add --no-cache tzdata curl bash
+RUN apk add --no-cache tzdata curl bash jq
 
 ARG AKKA_VERSION
 ENV AKKA_VERSION $AKKA_VERSION
