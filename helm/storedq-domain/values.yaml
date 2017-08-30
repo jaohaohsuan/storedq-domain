@@ -14,7 +14,7 @@ resources:
 actorsystem: demo1
 seedPort: 2551
 clusterHttpManPort: 7878
-
+seedrole: seed
 seednodes:
   replicaCount: 2
   service:

@@ -6,7 +6,9 @@ metadata:
   name: {{ template "fullname" . }}
 data:
   healthz: |-
+    #!/bin/bash
     /usr/bin/curl -i http://${POD_IP}:{{ .Values.clusterHttpManPort }}{{ $membersPath }}
+    /usr/bin/curl -s http://${POD_IP}:{{ .Values.clusterHttpManPort }}/members | jq '.members | map(select(.status == "Up" and (.roles | index("{{ .Values.seedrole }}")))) | length > 0'
   prod.conf: |-
     include "application"
 
