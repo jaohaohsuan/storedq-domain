@@ -41,13 +41,15 @@ lazy val cucumber = Seq(
   "io.cucumber" % "cucumber-jvm",
   "io.cucumber" % "cucumber-junit").map(_ % "2.0.0-SNAPSHOT").map(_ % "test")
 
+val akkaVersion = "2.5.4"
+
 lazy val akka = Seq(
   "com.typesafe.akka" %% "akka-cluster",
   "com.typesafe.akka" %% "akka-cluster-tools",
   "com.typesafe.akka" %% "akka-cluster-metrics",
   "com.typesafe.akka" %% "akka-persistence",
   "com.typesafe.akka" %% "akka-slf4j",
-  "com.typesafe.akka" %% "akka-remote").map(_ % "2.5.4")
+  "com.typesafe.akka" %% "akka-remote").map(_ % akkaVersion)
 
 lazy val refined = Seq(
   "eu.timepit" %% "refined",
@@ -63,9 +65,10 @@ libraryDependencies ++= Seq (
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
   "com.lightbend.akka" %% "akka-management-cluster-http" % "0.3",
   "com.waioeka.sbt" %% "cucumber-runner" % "0.1.2",
-  "com.github.jaohaohsuan" % "lib1" % "e4232201c5",
+  "com.github.jaohaohsuan" % "storedq-grpc" % "master-SNAPSHOT",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test",
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
 ) ++ cucumber ++ akka ++ refined
 
 val framework = new TestFramework("com.waioeka.sbt.runner.CucumberFramework")
