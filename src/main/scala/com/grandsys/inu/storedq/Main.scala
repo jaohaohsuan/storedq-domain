@@ -3,8 +3,14 @@ package com.grandsys.inu.storedq
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
+import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
+import com.grandsys.cluster.ActorSystemExtensions._
+import com.grandsys.cluster.{ClusterConfig, SingletonProps}
+import com.grandsys.inu.storedq.services.GrpcServer._
+import com.grandsys.inu.storedq.services._
 import com.typesafe.config.{Config, ConfigFactory}
-import ActorSystemExtensions._
+
+import scala.concurrent.ExecutionContext
 
 object Main extends App {
 
@@ -39,4 +45,17 @@ object Main extends App {
 
     system.waitTerminated()
   }
+
+  cluster.registerOnMemberUp {
+
+    val aggRoot = new SingletonProps(s"${StoredQueryRepoAggRoot.name}Guardian", StoredQueryRepoAggRoot.propsWithBackoff, "domain")
+
+    system.actorOf(aggRoot.props(), name = aggRoot.name)
+
+    val serviceImpl = new StoredQueriesImpl(system.actorOf(aggRoot.proxy()))
+
+    StoredQueriesGrpc.bindService(serviceImpl, ExecutionContext.global).initiate().start(50051)
+
+  }
+
 }

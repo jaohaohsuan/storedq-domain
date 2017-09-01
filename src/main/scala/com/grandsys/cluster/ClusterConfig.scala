@@ -1,8 +1,9 @@
-package com.grandsys.inu.storedq
+package com.grandsys.cluster
 
-import com.typesafe.config.Config
 import akka.actor.Address
-import collection.JavaConverters._
+import com.typesafe.config.Config
+
+import scala.collection.JavaConverters._
 
 class ClusterConfig(val config: Config)  {
 
