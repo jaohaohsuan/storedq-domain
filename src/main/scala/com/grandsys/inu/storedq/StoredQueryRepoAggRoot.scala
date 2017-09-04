@@ -1,9 +1,8 @@
 package com.grandsys.inu.storedq
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.actor.{ActorLogging, PoisonPill, Props}
 import akka.pattern.{Backoff, BackoffSupervisor}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
-import com.grandsys.cluster.SingletonProps
 import com.grandsys.inu.storedq.commands.CreateStoredQuery
 
 import scala.concurrent.duration._
@@ -34,7 +33,7 @@ class StoredQueryRepoAggRoot() extends PersistentActor with ActorLogging {
     case PoisonPill => context stop self
     case CreateStoredQuery(id, title, tags) =>
       log.info(s"$id, $title, $tags")
-      sender() ! services.CreateReply(id, message = title)
+      sender() ! services.CreatedAck(id, message = title)
     case msg =>
       log.info(s"$msg")
   }
