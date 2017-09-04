@@ -17,62 +17,64 @@ podTemplate(
         ]) {
 
     node(podLabel) {
-        stage('build') {
-            checkout scm
-            container('sbt') {
-                sh "sbt compile"
+        ansiColor('xterm') {
+            stage('build') {
+                checkout scm
+                container('sbt') {
+                    sh "sbt compile"
+                }
             }
-        }
 
-        stage('test') {
-            container('sbt') {
-                sh "sbt test"
+            stage('test') {
+                container('sbt') {
+                    sh "sbt cucumber"
+                }
             }
-        }
 
-        def HEAD = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-        def imageTag = "${HEAD}-${env.BUILD_NUMBER}"
-        def imageRepo = "${env.PRIVATE_REGISTRY}/inu/storedq-domain"
-        def image
+            def HEAD = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            def imageTag = "${HEAD}-${env.BUILD_NUMBER}"
+            def imageRepo = "${env.PRIVATE_REGISTRY}/inu/storedq-domain"
+            def image
 
-        stage('build image') {
-            container('sbt') {
-                sh "sbt cpJarsForDocker"
+            stage('build image') {
+                container('sbt') {
+                    sh "sbt cpJarsForDocker"
+                }
+                dir('target/docker') {
+                    def mainClass = sh(returnStdout: true, script: 'cat mainClass').trim()
+                    image = docker.build(imageRepo, "--pull --build-arg JAVA_MAIN_CLASS=${mainClass} .")
+                }
             }
-            dir('target/docker') {
-                def mainClass = sh(returnStdout: true, script: 'cat mainClass').trim()
-                image = docker.build(imageRepo, "--pull --build-arg JAVA_MAIN_CLASS=${mainClass} .")
+
+            stage('push image') {
+                docker.withRegistry(env.PRIVATE_REGISTRY_URL, 'docker-login') {
+                    image.push(imageTag)
+                }
             }
-        }
 
-        stage('push image') {
-            docker.withRegistry(env.PRIVATE_REGISTRY_URL, 'docker-login') {
-                image.push(imageTag)
+            stage('helm init') {
+                container('helm') {
+                    sh 'helm init --client-only'
+                }
             }
-        }
 
-        stage('helm init') {
-            container('helm') {
-                sh 'helm init --client-only'
-            }
-        }
+            stage('install chart') {
+                container('helm') {
+                    dir('helm/storedq-domain') {
+                        def release = "storedq-domain-${env.BUILD_ID}"
 
-        stage('install chart') {
-            container('helm') {
-                dir('helm/storedq-domain') {
-                    def release = "storedq-domain-${env.BUILD_ID}"
+                        sh 'helm lint .'
+                        sh "helm install -n ${release} --set=image.tag=${imageTag} ."
 
-                    sh 'helm lint .'
-                    sh "helm install -n ${release} --set=image.tag=${imageTag} ."
-
-                    try {
-                        sh "helm test ${release} --cleanup"
-                    } catch(err) {
-                        echo "${error}"
-                        currentBuild.result = FAILURE
-                    }
-                    finally {
-                        sh "helm delete --purge ${release}"
+                        try {
+                            sh "helm test ${release} --cleanup"
+                        } catch (err) {
+                            echo "${error}"
+                            currentBuild.result = FAILURE
+                        }
+                        finally {
+                            sh "helm delete --purge ${release}"
+                        }
                     }
                 }
             }
