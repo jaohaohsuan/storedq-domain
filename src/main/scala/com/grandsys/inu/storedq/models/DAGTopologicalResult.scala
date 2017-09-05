@@ -1,13 +1,12 @@
 package com.grandsys.inu.storedq.models
 
-import DAGTopologicalResult.{Edge, Vertex, IncomingEdges}
+import DAGTopologicalResult.{Vertex, IncomingEdges}
 import scala.annotation.tailrec
 import scala.util.Try
 
 object DAGTopologicalResult {
   type IncomingEdges = Set[String]
   type Vertex = String
-  case class Edge(start: String, end: String)
 
   def withAnyEdges(kv : (Vertex, IncomingEdges)) = { kv._2.isEmpty }
 
@@ -38,6 +37,7 @@ object DAGTopologicalResult {
     sort(with_incoming_edge_vertices.mapValues(_ -- no_incoming_edge_vertices.keys), result ++ no_incoming_edge_vertices.keys)
   }
 
+  /*
   def collectPaths(currentDot: String,
                       result: Set[Set[Edge]] = Set.empty[Set[Edge]],
                       currentPath: Set[Edge] = Set.empty[Edge])
@@ -47,12 +47,10 @@ object DAGTopologicalResult {
       case None => result + currentPath
       case Some(set) if set.isEmpty => result + currentPath
       case Some(set) =>
-        set.foldLeft(result) { (acc, e) => {
-          collectPaths(e, acc, currentPath + Edge(currentDot,e))
-        }
-        }
+        set.foldLeft(result) { (acc, e) => { collectPaths(e, acc, currentPath + Edge(currentDot,e)) } }
     }
   }
+  */
 
 }
 
@@ -61,7 +59,7 @@ case class DAGTopologicalResult(incoming_edges_map: Map[Vertex, IncomingEdges]) 
 
   lazy val hasCycle = Try(DAGTopologicalResult.sort(incoming_edges_map, Seq())).isFailure
 
-  def add(edge: Edge) = {
+  def add(edge: com.grandsys.inu.algorithm.DAG.Edge) = {
 
     // consumer permutation
     val p1: (String, Set[String]) = edge.start -> incoming_edges_map.getOrElse(edge.start, Set.empty)

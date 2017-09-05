@@ -10,6 +10,13 @@ lazy val akka = Seq(
   "com.typesafe.akka" %% "akka-slf4j",
   "com.typesafe.akka" %% "akka-remote").map(_ % akkaVersion)
 
+lazy val cucumber = Seq(
+  "io.cucumber" %  "cucumber-core",
+  "io.cucumber" %% "cucumber-scala" ,
+  "io.cucumber" %  "cucumber-jvm",
+  "io.cucumber" %  "cucumber-junit").map(_ % "2.0.0" % "test")
+
+
 lazy val refined = Seq(
   "eu.timepit" %% "refined",
   "eu.timepit" %% "refined-pureconfig",
@@ -20,16 +27,16 @@ lazy val refined = Seq(
 lazy val cucumberFramework = new TestFramework("com.waioeka.sbt.runner.CucumberFramework")
 
 lazy val root: Project = project.in(file(".")).settings(
-  name := "storedq-domain",
-  organization := "grandsys",
-  scalaVersion := "2.12.3",
-  version := "0.1.0",
-  exportJars := true,
-  resolvers ++= Seq(
+  name               := "storedq-domain",
+  organization       := "grandsys",
+  scalaVersion       := "2.12.3",
+  version            := "0.1.0",
+  exportJars         := true,
+  resolvers          ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
     "jitpack" at "https://jitpack.io"
   ),
-  cpJarsForDocker := {
+  cpJarsForDocker    := {
 
     val dockerDir = (target in Compile).value / "docker"
 
@@ -43,21 +50,17 @@ lazy val root: Project = project.in(file(".")).settings(
     IO.copyFile(baseDirectory.value / "Dockerfile", dockerDir / "Dockerfile")
   },
   libraryDependencies ++= Seq (
-    "org.iq80.leveldb"            % "leveldb"          % "0.7",
-    "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8",
-    "ch.qos.logback" % "logback-classic" % "1.2.3",
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-    "com.lightbend.akka" %% "akka-management-cluster-http" % "0.3",
-    "com.github.jaohaohsuan" % "storedq-grpc" % "master-SNAPSHOT",
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-    "io.cucumber" % "cucumber-core" % "2.0.0" % "test",
-    "io.cucumber" %% "cucumber-scala" % "2.0.0" % "test",
-    "io.cucumber" % "cucumber-jvm" % "2.0.0" % "test",
-    "io.cucumber" % "cucumber-junit" % "2.0.0" % "test",
-    "com.waioeka.sbt" %% "cucumber-runner" % "0.1.2",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
-  ) ++ akka ++ refined,
+    "org.iq80.leveldb"            % "leveldb"                       % "0.7",
+    "org.fusesource.leveldbjni"   % "leveldbjni-all"                % "1.8",
+    "ch.qos.logback"              % "logback-classic"               % "1.2.3",
+    "com.typesafe.scala-logging"  %% "scala-logging"                % "3.7.2",
+    "com.lightbend.akka"          %% "akka-management-cluster-http" % "0.3",
+    "com.github.jaohaohsuan"      % "storedq-grpc"                  % "master-SNAPSHOT",
+    "com.waioeka.sbt"             %% "cucumber-runner"              % "0.1.2",
+    "com.typesafe.akka"           %% "akka-testkit"                 % akkaVersion         % "test",
+    "org.scalatest"               %% "scalatest"                    % "3.0.1"             % "test",
+    "org.scalacheck"              %% "scalacheck"                   % "1.13.4"            % "test"
+  ) ++ cucumber ++ akka ++ refined,
   unmanagedClasspath in Test += baseDirectory.value / "src/test/resources",
   CucumberPlugin.glue := "com/grandsys/inu/storedq",
   testFrameworks += cucumberFramework,

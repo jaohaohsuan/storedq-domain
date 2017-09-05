@@ -1,12 +1,13 @@
 package com.grandsys.inu.storedq
 
 import com.grandsys.inu.storedq.models.DAGTopologicalResult
-import com.grandsys.inu.storedq.models.DAGTopologicalResult.Edge
 import com.waioeka.sbt.runner.CucumberSpec
 import cucumber.api.scala.{EN, ScalaDsl}
 import org.scalatest.Matchers
 
 import scala.util.{Failure, Success, Try}
+
+case class SimpleEdge(start: String, end: String) extends com.grandsys.inu.algorithm.DAG.Edge
 
 class TopologicalSortSteps extends ScalaDsl with EN with Matchers {
   var s0 = DAGTopologicalResult(incoming_edges_map = Map.empty)
@@ -14,14 +15,14 @@ class TopologicalSortSteps extends ScalaDsl with EN with Matchers {
   var s1_result: Try[Iterable[String]] = null
 
   Given("""^"([^"]*)" use "([^"]*)", "([^"]*)" and "([^"]*)"$"""){ (arg0:String, arg1:String, arg2:String, arg3:String) =>
-    s1 = s1.add(Edge(arg0, arg1))
-    s1 = s1.add(Edge(arg0, arg2))
-    s1 = s1.add(Edge(arg0, arg3))
+    s1 = s1.add(SimpleEdge(arg0, arg1))
+    s1 = s1.add(SimpleEdge(arg0, arg2))
+    s1 = s1.add(SimpleEdge(arg0, arg3))
   }
 
   Given("""^"([^"]*)" use "([^"]*)" and "([^"]*)"$"""){ (arg0:String, arg1:String, arg2:String) =>
-    s1 = s1.add(Edge(arg0, arg1))
-    s1 = s1.add(Edge(arg0, arg2))
+    s1 = s1.add(SimpleEdge(arg0, arg1))
+    s1 = s1.add(SimpleEdge(arg0, arg2))
   }
 
   When("""^sort$"""){ () =>
@@ -36,8 +37,8 @@ class TopologicalSortSteps extends ScalaDsl with EN with Matchers {
   }
 
   Given("""^"([^"]*)" use "([^"]*)" then "([^"]*)" use "([^"]*)"$"""){ (arg0:String, arg1:String, arg2:String, arg3:String) =>
-    s0 = s0.add(Edge(arg0, arg1))
-    s0 = s0.add(Edge(arg2, arg3))
+    s0 = s0.add(SimpleEdge(arg0, arg1))
+    s0 = s0.add(SimpleEdge(arg2, arg3))
   }
 
   Then("""^I get cycle graph$"""){ () =>

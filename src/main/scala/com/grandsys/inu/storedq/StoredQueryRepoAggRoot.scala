@@ -3,7 +3,7 @@ package com.grandsys.inu.storedq
 import akka.actor.{ActorLogging, PoisonPill, Props}
 import akka.pattern.{Backoff, BackoffSupervisor}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
-import com.grandsys.inu.storedq.commands.CreateStoredQuery
+import com.grandsys.inu.storedq.models.StoredQueriesState
 
 import scala.concurrent.duration._
 
@@ -27,6 +27,11 @@ object StoredQueryRepoAggRoot {
 
 class StoredQueryRepoAggRoot() extends PersistentActor with ActorLogging {
 
+  import com.grandsys.inu.storedq.commands._
+  import models.AddClauseExtensions._
+
+  private var state = StoredQueriesState()
+
   val persistenceId: String = StoredQueryRepoAggRoot.name
 
   val receiveCommand: Receive = {
@@ -34,6 +39,10 @@ class StoredQueryRepoAggRoot() extends PersistentActor with ActorLogging {
     case CreateStoredQuery(id, title, tags) =>
       log.info(s"$id, $title, $tags")
       sender() ! services.CreatedAck(id, message = title)
+    case addClause: AddClause =>
+      addClause.getEdge()
+
+
     case msg =>
       log.info(s"$msg")
   }
